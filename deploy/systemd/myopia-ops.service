@@ -1,0 +1,18 @@
+[Unit]
+Description=Myopia Ops Web Console
+After=network.target myopia-server.service
+
+[Service]
+Type=simple
+User=myopia
+Group=myopia
+WorkingDirectory=/opt/myopia_app
+EnvironmentFile=/etc/myopia/ops.env
+ExecStart=/opt/myopia_app/.venv/bin/python /opt/myopia_app/run_ops.py --host 127.0.0.1 --port 8788 --backend-host 127.0.0.1 --backend-port 8000
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

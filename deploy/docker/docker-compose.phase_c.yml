@@ -1,0 +1,61 @@
+services:
+  db:
+    image: postgres:16
+    container_name: myopia-db
+    environment:
+      POSTGRES_DB: myopia
+      POSTGRES_USER: myopia
+      POSTGRES_PASSWORD: myopia
+    volumes:
+      - myopia_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    container_name: myopia-backend
+    depends_on:
+      - db
+    environment:
+      MYOPIA_DATABASE_URL: ${MYOPIA_DATABASE_URL:-postgresql+psycopg://myopia:myopia@db:5432/myopia}
+      MYOPIA_MODEL_DIR: ${MYOPIA_MODEL_DIR:-/app/models}
+      MYOPIA_DEFAULT_DEVICE: ${MYOPIA_DEFAULT_DEVICE:-cpu}
+      MYOPIA_STORAGE_BACKEND: ${MYOPIA_STORAGE_BACKEND:-local}
+      MYOPIA_LOCAL_STORAGE_DIR: ${MYOPIA_LOCAL_STORAGE_DIR:-/app/storage}
+      MYOPIA_ALLOWED_ORIGINS: ${MYOPIA_ALLOWED_ORIGINS:-http://127.0.0.1:8787,http://127.0.0.1:5173}
+      MYOPIA_AUTH_SECRET: ${MYOPIA_AUTH_SECRET:-change-me-in-production}
+      MYOPIA_SKIP_STARTUP_CHECK: ${MYOPIA_SKIP_STARTUP_CHECK:-1}
+    command: ["python", "run_server.py", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../models:/app/models:ro
+      - ../../storage:/app/storage
+
+  ops:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    container_name: myopia-ops
+    depends_on:
+      - backend
+    command:
+      [
+        "python",
+        "run_ops.py",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8788",
+        "--backend-host",
+        "backend",
+        "--backend-port",
+        "8000"
+      ]
+    ports:
+      - "127.0.0.1:8788:8788"
+
+volumes:
+  myopia_pg_data:

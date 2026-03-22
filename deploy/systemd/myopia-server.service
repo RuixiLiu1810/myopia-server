@@ -1,0 +1,18 @@
+[Unit]
+Description=Myopia Backend API Service
+After=network.target
+
+[Service]
+Type=simple
+User=myopia
+Group=myopia
+WorkingDirectory=/opt/myopia_app
+EnvironmentFile=/etc/myopia/server.env
+ExecStart=/opt/myopia_app/.venv/bin/python /opt/myopia_app/run_server.py --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

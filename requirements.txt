@@ -1,0 +1,23 @@
+# Myopia app unified requirements (single source of truth).
+# Install from repo root:
+#   pip install -r requirements.txt
+#
+# Stability rule:
+# - Core runtime deps are pinned to known working versions in local env.
+# - Phase A DB deps use bounded ranges for compatibility.
+
+# API runtime
+fastapi==0.135.1
+uvicorn==0.42.0
+pydantic==2.12.5
+
+# Inference runtime
+numpy==2.4.3
+pillow==12.1.1
+torch==2.10.0
+torchvision==0.25.0
+
+# Phase A database
+sqlalchemy>=2.0.40,<3.0
+alembic>=1.16.0,<2.0
+psycopg[binary]>=3.2.0,<4.0

@@ -1,0 +1,2 @@
+# Keep backend requirements aligned with root requirements.
+-r ../requirements.txt
