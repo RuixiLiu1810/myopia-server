@@ -12,7 +12,7 @@ import tempfile
 import urllib.error
 import urllib.request
 
-from smoke_test_inference_api import BACKEND_DIR, get_free_port, wait_until_ready
+from smoke_test_inference_api import BACKEND_DIR, get_free_port, resolve_path, wait_until_ready
 
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
@@ -78,12 +78,16 @@ def main() -> None:
     )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=0, help="0 means auto")
+    parser.add_argument("--model-dir", default="../models")
     parser.add_argument("--startup-timeout", type=float, default=45.0)
     args = parser.parse_args()
 
     host = args.host
     port = args.port if args.port > 0 else get_free_port(host)
     base_url = f"http://{host}:{port}"
+    model_dir = resolve_path(args.model_dir)
+    if not model_dir.exists():
+        raise FileNotFoundError(f"Model directory not found: {model_dir}")
 
     db_fd, db_path_raw = tempfile.mkstemp(prefix="myopia_clinical_authz_smoke_", suffix=".db")
     os.close(db_fd)
@@ -128,6 +132,7 @@ def main() -> None:
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     env["MYOPIA_DATABASE_URL"] = database_url
+    env["MYOPIA_MODEL_DIR"] = str(model_dir)
     env["MYOPIA_STORAGE_BACKEND"] = "local"
     env["MYOPIA_LOCAL_STORAGE_DIR"] = str(storage_dir)
     env["MYOPIA_SKIP_STARTUP_CHECK"] = "1"
@@ -150,6 +155,7 @@ def main() -> None:
 
     print(f"[info] python={sys.executable}")
     print(f"[info] base_url={base_url}")
+    print(f"[info] model_dir={model_dir}")
     print(f"[info] database_url={database_url}")
     print(f"[info] local_storage_dir={storage_dir}")
 

@@ -33,6 +33,8 @@ def main() -> None:
         [
             python,
             "scripts/smoke_test_clinical_authz.py",
+            "--model-dir",
+            args.model_dir,
         ],
     )
     _run(
