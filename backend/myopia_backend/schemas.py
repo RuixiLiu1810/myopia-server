@@ -260,3 +260,56 @@ class SetupBootstrapResponse(BaseModel):
     marker_written: bool
     marker_file: str
     setup_required: bool
+
+
+class SetupEnvWriteRequest(BaseModel):
+    database_url: str = Field(..., description="Database URL")
+    model_dir: str = Field(..., description="Absolute path to model directory")
+    default_device: Optional[str] = Field(default="cpu", description='Default device, e.g. "cpu"')
+    storage_backend: str = Field(default="local", description="Storage backend")
+    local_storage_dir: str = Field(..., description="Storage directory path")
+    allowed_origins: str = Field(..., description="Comma-separated CORS origins")
+    auth_secret: Optional[str] = Field(default=None, description="Auth secret; generated if empty")
+    auth_token_ttl_minutes: int = Field(default=480, description="Access token TTL in minutes")
+    max_visits: int = Field(default=5, description="Max visits per prediction request")
+    max_inline_image_bytes: int = Field(default=8 * 1024 * 1024, description="Max bytes per inline image")
+    max_inline_total_bytes: int = Field(default=32 * 1024 * 1024, description="Max total inline payload")
+    setup_enabled: bool = Field(default=True, description="Enable setup wizard")
+    setup_enforce_lock: bool = Field(default=True, description="Lock non-setup routes during setup")
+    enable_legacy_public_clinical_routes: bool = Field(
+        default=False,
+        description="Enable legacy unauth clinical routes",
+    )
+
+
+class SetupEnvWriteResponse(BaseModel):
+    ok: bool
+    env_file: str
+    keys_written: int
+    auth_secret_generated: bool
+
+
+class SetupCommandRunRequest(BaseModel):
+    database_url: Optional[str] = Field(default=None, description="Optional DB URL override")
+
+
+class SetupCommandRunResponse(BaseModel):
+    ok: bool
+    action: str
+    command: List[str] = Field(default_factory=list)
+    return_code: int
+    stdout: str = ""
+    stderr: str = ""
+
+
+class SetupDiagnosticsResponse(BaseModel):
+    setup: SetupStatusResponse
+    env_file: str
+    python_version: str
+    os_pretty_name: str
+    model_dir: str
+    model_dir_exists: bool
+    model_asset_count: int
+    db_ok: bool
+    db_message: str
+    env_file_exists: bool

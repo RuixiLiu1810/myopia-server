@@ -90,6 +90,10 @@ def _default_install_marker_file() -> str:
     return str((APP_DIR / ".myopia_installed").resolve())
 
 
+def _default_setup_env_file() -> str:
+    return "/etc/myopia/server.env"
+
+
 @dataclass(frozen=True)
 class Settings:
     """Immutable backend settings resolved from environment."""
@@ -110,6 +114,8 @@ class Settings:
     setup_enabled: bool
     setup_enforce_lock: bool
     install_marker_file: str
+    setup_env_file: str
+    setup_command_timeout_seconds: int
 
 
 @lru_cache(maxsize=1)
@@ -142,4 +148,6 @@ def get_settings() -> Settings:
         setup_enforce_lock=_env_bool("MYOPIA_SETUP_ENFORCE_LOCK", default=True),
         install_marker_file=_env_optional("MYOPIA_INSTALL_MARKER_FILE")
         or _default_install_marker_file(),
+        setup_env_file=_env_optional("MYOPIA_SETUP_ENV_FILE") or _default_setup_env_file(),
+        setup_command_timeout_seconds=_env_int("MYOPIA_SETUP_COMMAND_TIMEOUT_SECONDS", default=240),
     )
