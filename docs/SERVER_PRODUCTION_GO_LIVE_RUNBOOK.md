@@ -30,6 +30,14 @@ Minimum required checks:
 5. `MYOPIA_ENABLE_LEGACY_PUBLIC_CLINICAL_ROUTES=0`.
 6. `MYOPIA_SETUP_ENABLED=1` and `MYOPIA_SETUP_ENFORCE_LOCK=1`.
 
+Run preflight validator:
+
+```bash
+cd /opt/myopia_app/backend
+. ../.venv/bin/activate
+python scripts/preflight_server_env.py --env-file /etc/myopia/server.env
+```
+
 ## 4. DB Migration (must run before service start)
 
 ```bash

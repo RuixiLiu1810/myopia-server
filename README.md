@@ -52,3 +52,5 @@ python run_server.py --host 0.0.0.0 --port 8000
 ## 上线
 
 按：`docs/SERVER_PRODUCTION_GO_LIVE_RUNBOOK.md`
+
+分阶段执行清单：`docs/GO_LIVE_PHASE_EXECUTION.md`
