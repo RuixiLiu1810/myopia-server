@@ -6,7 +6,7 @@ __pycache__/
 .env
 .env.*
 *.log
-storage/
+/storage/
 backend/.pytest_cache/
 backend/.mypy_cache/
 /models/
