@@ -10,3 +10,4 @@ storage/
 backend/.pytest_cache/
 backend/.mypy_cache/
 models/
+.myopia_installed

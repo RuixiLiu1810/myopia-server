@@ -86,6 +86,23 @@ def main() -> None:
         default=int(_env_optional("MYOPIA_MAX_INLINE_TOTAL_BYTES") or str(32 * 1024 * 1024)),
         help="Maximum inline payload bytes across one request.",
     )
+    parser.add_argument(
+        "--setup-enabled",
+        choices=["0", "1"],
+        default=_env_optional("MYOPIA_SETUP_ENABLED") or "1",
+        help="Enable first-run setup endpoints and status checks.",
+    )
+    parser.add_argument(
+        "--setup-enforce-lock",
+        choices=["0", "1"],
+        default=_env_optional("MYOPIA_SETUP_ENFORCE_LOCK") or "1",
+        help="When setup is required, lock non-setup endpoints.",
+    )
+    parser.add_argument(
+        "--install-marker-file",
+        default=_env_optional("MYOPIA_INSTALL_MARKER_FILE") or "",
+        help="Optional install marker file path.",
+    )
     parser.add_argument("--skip-startup-check", action="store_true")
     parser.add_argument("--reload", action="store_true")
     args = parser.parse_args()
@@ -112,6 +129,13 @@ def main() -> None:
     os.environ["MYOPIA_MAX_VISITS"] = str(args.max_visits)
     os.environ["MYOPIA_MAX_INLINE_IMAGE_BYTES"] = str(args.max_inline_image_bytes)
     os.environ["MYOPIA_MAX_INLINE_TOTAL_BYTES"] = str(args.max_inline_total_bytes)
+    os.environ["MYOPIA_SETUP_ENABLED"] = args.setup_enabled
+    os.environ["MYOPIA_SETUP_ENFORCE_LOCK"] = args.setup_enforce_lock
+
+    if args.install_marker_file.strip():
+        os.environ["MYOPIA_INSTALL_MARKER_FILE"] = _resolve_path(args.install_marker_file)
+    else:
+        os.environ.pop("MYOPIA_INSTALL_MARKER_FILE", None)
 
     try:
         importlib.import_module("myopia_backend.api")
@@ -131,6 +155,11 @@ def main() -> None:
     print(f"[run] MYOPIA_MAX_VISITS={os.environ['MYOPIA_MAX_VISITS']}")
     print(f"[run] MYOPIA_MAX_INLINE_IMAGE_BYTES={os.environ['MYOPIA_MAX_INLINE_IMAGE_BYTES']}")
     print(f"[run] MYOPIA_MAX_INLINE_TOTAL_BYTES={os.environ['MYOPIA_MAX_INLINE_TOTAL_BYTES']}")
+    print(f"[run] MYOPIA_SETUP_ENABLED={os.environ['MYOPIA_SETUP_ENABLED']}")
+    print(f"[run] MYOPIA_SETUP_ENFORCE_LOCK={os.environ['MYOPIA_SETUP_ENFORCE_LOCK']}")
+    print(
+        f"[run] MYOPIA_INSTALL_MARKER_FILE={os.environ.get('MYOPIA_INSTALL_MARKER_FILE', '<default>')}"
+    )
 
     uvicorn.run(
         "myopia_backend.api:app",

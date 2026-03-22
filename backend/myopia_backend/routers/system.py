@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 
 from ..inference_service import routing_rules
+from ..install_state import get_setup_status
 from ..model_store import list_available_model_assets, list_available_models
 
 
@@ -20,26 +21,49 @@ def build_system_router(settings) -> APIRouter:
 
     @router.get("/healthz")
     def healthz(model_dir: Optional[str] = None):
+        setup = get_setup_status(settings).to_dict()
+        used_model_dir = _resolve_model_dir(settings.model_dir, model_dir)
+
         try:
-            used_model_dir = _resolve_model_dir(settings.model_dir, model_dir)
             model_assets = list_available_model_assets(used_model_dir)
-            return {
-                "status": "ok",
-                "model_dir": used_model_dir,
-                "model_count": len(model_assets),
-                "default_model_dir": settings.model_dir,
-                "default_device": settings.default_device,
-                "storage_backend": settings.storage_backend,
-                "local_storage_dir": settings.local_storage_dir,
-                "allowed_origins": settings.allowed_origins,
-                "limits": {
-                    "max_visits": settings.max_visits,
-                    "max_inline_image_bytes": settings.max_inline_image_bytes,
-                    "max_inline_total_bytes": settings.max_inline_total_bytes,
-                },
-            }
         except Exception as exc:
+            if setup.get("setup_required"):
+                # During installation mode, allow health checks even if model assets are not ready yet.
+                return {
+                    "status": "setup_required",
+                    "model_dir": used_model_dir,
+                    "model_count": 0,
+                    "model_error": str(exc),
+                    "default_model_dir": settings.model_dir,
+                    "default_device": settings.default_device,
+                    "storage_backend": settings.storage_backend,
+                    "local_storage_dir": settings.local_storage_dir,
+                    "allowed_origins": settings.allowed_origins,
+                    "setup": setup,
+                    "limits": {
+                        "max_visits": settings.max_visits,
+                        "max_inline_image_bytes": settings.max_inline_image_bytes,
+                        "max_inline_total_bytes": settings.max_inline_total_bytes,
+                    },
+                }
             raise HTTPException(status_code=503, detail=f"health check failed: {exc}") from exc
+
+        return {
+            "status": "ok",
+            "model_dir": used_model_dir,
+            "model_count": len(model_assets),
+            "default_model_dir": settings.model_dir,
+            "default_device": settings.default_device,
+            "storage_backend": settings.storage_backend,
+            "local_storage_dir": settings.local_storage_dir,
+            "allowed_origins": settings.allowed_origins,
+            "setup": setup,
+            "limits": {
+                "max_visits": settings.max_visits,
+                "max_inline_image_bytes": settings.max_inline_image_bytes,
+                "max_inline_total_bytes": settings.max_inline_total_bytes,
+            },
+        }
 
     @router.get("/model-info")
     def model_info(model_dir: Optional[str] = None):

@@ -129,6 +129,7 @@ def main() -> None:
     env["PYTHONUNBUFFERED"] = "1"
     env["MYOPIA_MODEL_DIR"] = str(model_dir)
     env["MYOPIA_DEFAULT_DEVICE"] = args.device
+    env["MYOPIA_SETUP_ENFORCE_LOCK"] = "0"
 
     cmd = [
         sys.executable,

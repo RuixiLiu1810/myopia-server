@@ -131,6 +131,7 @@ def main() -> None:
     env["MYOPIA_STORAGE_BACKEND"] = "local"
     env["MYOPIA_LOCAL_STORAGE_DIR"] = str(storage_dir)
     env["MYOPIA_SKIP_STARTUP_CHECK"] = "1"
+    env["MYOPIA_SETUP_ENFORCE_LOCK"] = "0"
 
     cmd = [
         sys.executable,

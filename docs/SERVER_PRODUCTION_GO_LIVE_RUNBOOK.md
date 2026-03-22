@@ -19,7 +19,7 @@ This runbook is for **server-only production deployment**:
 
 Create `/etc/myopia/server.env` based on:
 
-1. [server.env.example](/Users/liuruixi/Documents/Code/myopia_app/deploy/env/server.env.example)
+1. [server.env.example](/Users/liuruixi/Documents/Code/myopia-server/deploy/env/server.env.example)
 
 Minimum required checks:
 
@@ -28,6 +28,7 @@ Minimum required checks:
 3. `MYOPIA_ALLOWED_ORIGINS` uses real origins, not `*`.
 4. `MYOPIA_AUTH_SECRET` is strong random (replace default).
 5. `MYOPIA_ENABLE_LEGACY_PUBLIC_CLINICAL_ROUTES=0`.
+6. `MYOPIA_SETUP_ENABLED=1` and `MYOPIA_SETUP_ENFORCE_LOCK=1`.
 
 ## 4. DB Migration (must run before service start)
 
@@ -46,7 +47,7 @@ Expected:
 
 Copy service file:
 
-1. [myopia-server.service](/Users/liuruixi/Documents/Code/myopia_app/deploy/systemd/myopia-server.service)
+1. [myopia-server.service](/Users/liuruixi/Documents/Code/myopia-server/deploy/systemd/myopia-server.service)
 
 Install commands:
 
@@ -57,9 +58,26 @@ sudo systemctl enable --now myopia-server
 sudo systemctl status myopia-server --no-pager
 ```
 
-## 6. Initial Admin Bootstrap
+## 6. First-Time Setup (Web Installer)
 
-Run once (or password reset when needed):
+After service is up, open:
+
+1. `http://<server-host>:8000/setup`
+
+Then:
+
+1. Create initial admin username and password.
+2. Confirm `/v1/setup/status` returns `setup_required=false`.
+3. Validate login via `/v1/auth/login`.
+
+Notes:
+
+1. In setup mode, non-setup endpoints return `503` by design.
+2. If setup page says DB not ready, re-check migration step and DB connectivity.
+
+## 7. Optional CLI Bootstrap (Fallback)
+
+If web setup is unavailable, bootstrap via script:
 
 ```bash
 cd /opt/myopia_app
@@ -72,7 +90,7 @@ cd /opt/myopia_app
   --activate-if-exists
 ```
 
-## 7. Go-Live Verification
+## 8. Go-Live Verification
 
 API health:
 
@@ -96,7 +114,7 @@ Expected:
 1. `/v1/patients` is not available (404).
 2. `/v1/clinical/patients` returns 401 without token.
 
-## 8. Rollback Plan
+## 9. Rollback Plan
 
 If startup fails after release:
 

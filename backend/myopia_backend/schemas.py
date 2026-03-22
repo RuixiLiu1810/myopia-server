@@ -237,3 +237,26 @@ class PatientPredictionListItem(BaseModel):
     family_results: dict[str, Any] = Field(default_factory=dict)
     latency_ms: Optional[float]
     created_at: str
+
+
+class SetupStatusResponse(BaseModel):
+    setup_required: bool
+    db_ready: bool
+    admin_user_count: int
+    marker_exists: bool
+    marker_file: str
+    reasons: List[str] = Field(default_factory=list)
+
+
+class SetupBootstrapRequest(BaseModel):
+    username: str = Field(..., description="Initial admin username")
+    password: str = Field(..., description="Initial admin password")
+    display_name: Optional[str] = Field(default="System Admin", description="Admin display name")
+
+
+class SetupBootstrapResponse(BaseModel):
+    ok: bool
+    username: str
+    marker_written: bool
+    marker_file: str
+    setup_required: bool

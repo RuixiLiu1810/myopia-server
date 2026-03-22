@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .config import get_settings
+from .install_state import get_setup_status
 from .model_store import list_available_model_assets
 from .routers.auth import build_auth_router
 from .routers.assets import build_assets_router
 from .routers.clinical import build_clinical_router
 from .routers.inference import build_inference_router
 from .routers.ops import build_ops_router
+from .routers.setup import build_setup_router
 from .routers.system import build_system_router
 
 
@@ -29,6 +32,9 @@ def create_app() -> FastAPI:
     def startup_check() -> None:
         if settings.skip_startup_check:
             return
+        if settings.setup_enabled and get_setup_status(settings).setup_required:
+            # During first-time setup, allow backend startup even if models are not ready yet.
+            return
         models = list_available_model_assets(settings.model_dir)
         if not models:
             raise RuntimeError(
@@ -36,6 +42,33 @@ def create_app() -> FastAPI:
                 "Set MYOPIA_MODEL_DIR to a valid model directory."
             )
 
+    @app.middleware("http")
+    async def setup_gate(request: Request, call_next):
+        if not settings.setup_enabled or not settings.setup_enforce_lock:
+            return await call_next(request)
+
+        path = request.url.path
+        if request.method.upper() == "OPTIONS":
+            return await call_next(request)
+        if path.startswith("/healthz") or path.startswith("/v1/setup"):
+            return await call_next(request)
+        if path == "/" or path.startswith("/setup"):
+            return await call_next(request)
+        if path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json"):
+            return await call_next(request)
+
+        status = get_setup_status(settings)
+        if status.setup_required:
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "detail": "server setup required; open /setup and initialize admin account",
+                    "setup": status.to_dict(),
+                },
+            )
+        return await call_next(request)
+
+    app.include_router(build_setup_router(settings))
     app.include_router(build_system_router(settings))
     app.include_router(build_inference_router(settings))
     app.include_router(build_auth_router(settings))

@@ -53,7 +53,7 @@ def _default_model_dir() -> str:
     """Pick a sensible default model directory.
 
     Strategy:
-    1) prefer a directory that actually contains Xu assets
+    1) prefer a directory that actually contains Xu/Fen assets
     2) otherwise pick first existing candidate
     3) otherwise return app-local models path for explicit setup
     """
@@ -86,6 +86,10 @@ def _default_local_storage_dir() -> str:
     return str((APP_DIR / "storage").resolve())
 
 
+def _default_install_marker_file() -> str:
+    return str((APP_DIR / ".myopia_installed").resolve())
+
+
 @dataclass(frozen=True)
 class Settings:
     """Immutable backend settings resolved from environment."""
@@ -103,6 +107,9 @@ class Settings:
     auth_secret: str
     auth_token_ttl_minutes: int
     enable_legacy_public_clinical_routes: bool
+    setup_enabled: bool
+    setup_enforce_lock: bool
+    install_marker_file: str
 
 
 @lru_cache(maxsize=1)
@@ -131,4 +138,8 @@ def get_settings() -> Settings:
         enable_legacy_public_clinical_routes=_env_bool(
             "MYOPIA_ENABLE_LEGACY_PUBLIC_CLINICAL_ROUTES", default=False
         ),
+        setup_enabled=_env_bool("MYOPIA_SETUP_ENABLED", default=True),
+        setup_enforce_lock=_env_bool("MYOPIA_SETUP_ENFORCE_LOCK", default=True),
+        install_marker_file=_env_optional("MYOPIA_INSTALL_MARKER_FILE")
+        or _default_install_marker_file(),
     )
